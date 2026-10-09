@@ -1,16 +1,19 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from functools import wraps
+
+from flask import (
+    Flask, render_template, request, redirect,
+    url_for, session, flash
+)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from functools import wraps
-
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = os.environ.get(
-    "SECRET_KEY", "change-this-secret-before-deployment"
-)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///jewellers.db"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///jewellers.db"
+).replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -97,10 +100,8 @@ def home():
 
 
 @app.route("/admin")
+@admin_required
 def admin():
-    if not session.get("admin_logged_in"):
-        return redirect(url_for("admin_login"))
-
     return render_template(
         "admin.html",
         settings=get_settings(),
@@ -113,47 +114,64 @@ def admin():
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
-        expected_user = os.environ.get("ADMIN_USERNAME", "admin")
-        expected_password = os.environ.get("ADMIN_PASSWORD")
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
 
-        if not expected_password:
+        expected_user = os.environ.get(
+            "ADMIN_USERNAME", "admin"
+        ).strip()
+        expected_password = os.environ.get("Vishal@Jewel7264!", "")
+
+        if not app.config["SECRET_KEY"]:
+            flash("Server configuration error: SECRET_KEY missing.")
+        elif not expected_password:
             flash("Admin password server par set nahi hai.")
-        elif (
-            request.form.get("username") == expected_user
-            and request.form.get("password") == expected_password
-        ):
+        elif username == expected_user and password == expected_password:
+            session.clear()
             session["admin_logged_in"] = True
             return redirect(url_for("admin"))
         else:
             flash("Username ya password galat hai.")
 
-    return """
+    messages = "".join(
+        f'<p style="color:#ff8080">{message}</p>'
+        for category, message in session.pop("_flashes", [])
+    ) if "_flashes" in session else ""
+
+    return f"""
     <!doctype html>
-    <html lang="en">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vishal Jewellers Admin Login</title>
+    <html lang="hi">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Vishal Jewellers Admin Login</title>
+    </head>
     <body style="background:#111;color:#e6c875;font-family:Arial;
-    max-width:360px;margin:70px auto;padding:20px">
-    <h2>Vishal Jewellers</h2>
-    <h3>Admin Login</h3>
-    <form method="post">
-      <input name="username" placeholder="Username"
-      required style="padding:12px;width:90%;margin:8px 0">
-      <input name="password" type="password" placeholder="Password"
-      required style="padding:12px;width:90%;margin:8px 0">
-      <button style="padding:12px;width:100%;background:#e6c875">
-      Login</button>
-    </form>
-    </body></html>
+      max-width:360px;margin:70px auto;padding:20px">
+      <h2>Vishal Jewellers</h2>
+      <h3>Admin Login</h3>
+      {messages}
+      <form method="post">
+        <input name="username" placeholder="Username"
+          autocomplete="username" required
+          style="box-sizing:border-box;padding:12px;width:100%;margin:8px 0">
+        <input name="password" type="password" placeholder="Password"
+          autocomplete="current-password" required
+          style="box-sizing:border-box;padding:12px;width:100%;margin:8px 0">
+        <button type="submit"
+          style="padding:12px;width:100%;background:#e6c875">
+          Login
+        </button>
+      </form>
+    </body>
+    </html>
     """
 
 
 @app.route("/admin/settings", methods=["POST"])
 @admin_required
 def save_settings():
-    allowed = set(DEFAULT_SETTINGS)
-
-    for name in allowed:
+    for name in DEFAULT_SETTINGS:
         value = request.form.get(name, "").strip()
         item = Setting.query.filter_by(name=name).first()
 
@@ -179,7 +197,6 @@ def add_product():
     try:
         price = float(request.form.get("price", "0"))
         stock = int(request.form.get("stock", "0"))
-
         if price < 0 or stock < 0:
             raise ValueError
     except ValueError:
@@ -194,7 +211,6 @@ def add_product():
         description=request.form.get("description", ""),
         image_url=request.form.get("image_url", "")
     )
-
     db.session.add(product)
     db.session.commit()
     flash("Product added!")
@@ -205,7 +221,6 @@ def add_product():
 @admin_required
 def delete_product(product_id):
     product = db.session.get(Product, product_id)
-
     if product:
         db.session.delete(product)
         db.session.commit()
@@ -219,12 +234,6 @@ def admin_logout():
     session.clear()
     return redirect(url_for("home"))
 
-
-with app.app_context():
-    db.create_all()
-
-from flask import render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash, check_password_hash
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -240,8 +249,7 @@ def register():
             flash("Password kam se kam 8 characters ka hona chahiye.")
             return redirect(url_for("register"))
 
-        existing = Customer.query.filter_by(mobile=mobile).first()
-        if existing:
+        if Customer.query.filter_by(mobile=mobile).first():
             flash("Is mobile number se account pehle se hai.")
             return redirect(url_for("register"))
 
@@ -251,7 +259,6 @@ def register():
         )
         db.session.add(customer)
         db.session.commit()
-
         session["customer_mobile"] = mobile
         return redirect(url_for("account"))
 
@@ -263,7 +270,6 @@ def customer_login():
     if request.method == "POST":
         mobile = request.form.get("mobile", "").strip()
         password = request.form.get("password", "")
-
         customer = Customer.query.filter_by(mobile=mobile).first()
 
         if customer and check_password_hash(customer.password_hash, password):
@@ -288,5 +294,14 @@ def account():
 def customer_logout():
     session.pop("customer_mobile", None)
     return redirect(url_for("home"))
+
+
+with app.app_context():
+    db.create_all()
+
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000))
+)
