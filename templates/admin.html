@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vishal Jewellers | Admin Panel</title>
+
+<style>
+:root {
+    --gold: #d8b66a;
+    --gold-light: #f6e4a8;
+    --bg: #090909;
+    --panel: #151515;
+    --border: #332a18;
+    --text: #f5f0e5;
+    --muted: #aaa39a;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+}
+header {
+    background: #111;
+    border-bottom: 1px solid var(--border);
+    padding: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.brand {
+    color: var(--gold);
+    font-size: 21px;
+    font-weight: bold;
+}
+.brand small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 3px;
+    margin-top: 5px;
+}
+.container {
+    max-width: 1200px;
+    padding: 18px;
+    margin: auto;
+}
+.welcome {
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(135deg,#211b10,#111 65%);
+    margin-bottom: 20px;
+}
+.welcome h1 {
+    color: var(--gold-light);
+    margin-top: 0;
+    font-size: 25px;
+}
+.muted { color: var(--muted); line-height: 1.6; }
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(145px,1fr));
+    gap: 12px;
+    margin: 20px 0;
+}
+.stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+}
+.stat span { color: var(--muted); font-size: 12px; }
+.stat strong {
+    display: block;
+    color: var(--gold);
+    font-size: 27px;
+    margin-top: 12px;
+}
+nav {
+    display: flex;
+    gap: 9px;
+    overflow-x: auto;
+    padding: 5px 0 16px;
+}
+nav a {
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--gold-light);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 10px 14px;
+    font-size: 13px;
+}
+nav a:hover { background: #302615; }
+.section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin: 16px 0;
+    border-radius: 16px;
+    scroll-margin-top: 100px;
+}
+h2 {
+    color: var(--gold);
+    font-size: 19px;
+    margin-top: 0;
+}
+label {
+    display: block;
+    font-size: 13px;
+    color: var(--gold-light);
+    margin: 13px 0 6px;
+}
+input, textarea, select {
+    width: 100%;
+    padding: 12px;
+    color: white;
+    background: #0b0b0b;
+    border: 1px solid #443820;
+    border-radius: 9px;
+    outline: none;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+}
+textarea { min-height: 80px; resize: vertical; }
+button, .button {
+    display: inline-block;
+    background: var(--gold);
+    color: #16120a;
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 16px;
+    margin-top: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+}
+button:hover, .button:hover { background: var(--gold-light); }
+.secondary {
+    color: var(--gold-light);
+    background: #292216;
+    border: 1px solid var(--border);
+}
+.row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(210px,1fr));
+    gap: 12px;
+}
+.table-wrap { overflow-x: auto; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 460px;
+}
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+th { color: var(--gold); }
+.badge {
+    display: inline-block;
+    padding: 6px 9px;
+    border-radius: 20px;
+    background: #292216;
+    color: var(--gold-light);
+    font-size: 11px;
+}
+.flash {
+    border: 1px solid var(--gold);
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    color: var(--gold-light);
+}
+footer {
+    padding: 25px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+}
+@media(max-width:500px) {
+    .container { padding: 12px; }
+    .welcome { padding: 18px; }
+    .section { padding: 15px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand">
+        VISHAL JEWELLERS
+        <small>PREMIUM ADMINISTRATION</small>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="welcome">
+        <span class="badge">VIP CONTROL CENTER</span>
+        <h1>Welcome to Admin Panel 👑</h1>
+        <p class="muted">
+            Manage your jewellery store, products, orders,
+            gold rates, customer information and website settings.
+        </p>
+        <a class="button secondary" href="/">View Website ↗</a>
+        <a class="button secondary" href="/admin/logout">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% for message in messages %}
+        <div class="flash">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <nav>
+        <a href="#overview">Dashboard</a>
+        <a href="#products">Products</a>
+        <a href="#orders">Orders</a>
+        <a href="#settings">Shop Settings</a>
+        <a href="#rates">Gold & Silver</a>
+        <a href="#marketing">Announcements</a>
+        <a href="#security">Security</a>
+    </nav>
+
+    <section class="grid" id="overview">
+        <div class="stat">
+            <span>Total Products</span>
+            <strong>{{ products|length }}</strong>
+        </div>
+        <div class="stat">
+            <span>Total Orders</span>
+            <strong>{{ orders|length }}</strong>
+        </div>
+        <div class="stat">
+            <span>Customers</span>
+            <strong>{{ customers }}</strong>
+        </div>
+        <div class="stat">
+            <span>Pending Orders</span>
+            <strong>{{ orders|selectattr('status','equalto','Pending')|list|length }}</strong>
+        </div>
+    </section>
+
+    <section class="section" id="products">
+        <h2>💎 Add New Jewellery Product</h2>
+        <p class="muted">Add a product to your online jewellery catalogue.</p>
+
+        <form action="/admin/product/add" method="post">
+            <label>Product Name *</label>
+            <input name="name" required placeholder="e.g. Gold Necklace">
+
+            <div class="row">
+                <div>
+                    <label>Category</label>
+                    <select name="category">
+                        <option>Gold Jewellery</option>
+                        <option>Silver Jewellery</option>
+                        <option>Diamond Jewellery</option>
+                        <option>Bridal Collection</option>
+                        <option>Rings</option>
+                        <option>Earrings</option>
+                        <option>Necklaces</option>
+                        <option>Bracelets</option>
+                        <option>Chains</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Price (₹)</label>
+                    <input name="price" type="number" min="0" step="0.01" value="0">
+                </div>
+                <div>
+                    <label>Stock Quantity</label>
+                    <input name="stock" type="number" min="0" value="0">
+                </div>
+            </div>
+
+            <label>Product Image URL</label>
+            <input name="image_url" type="url" placeholder="https://example.com/product.jpg">
+
+            <label>Description</label>
+            <textarea name="description" placeholder="Describe the jewellery..."></textarea>
+
+            <button type="submit">＋ Add Product</button>
+        </form>
+
+        <h2 style="margin-top:28px">Current Products</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in products %}
+                    <tr>
+                        <td>{{ p.id }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.category }}</td>
+                        <td>₹{{ "%.2f"|format(p.price) }}</td>
+                        <td>{{ p.stock }}</td>
+                        <td>
+                            <form action="/admin/product/delete/{{ p.id }}"
+                                  method="post"
+                                  onsubmit="return confirm('Delete this product?')">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No products added yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section" id="orders">
+        <h2>📦 Orders Management</h2>
+        <p class="muted">Review orders received by the store.</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer Mobile</th>
+                        <th>Product</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for o in orders %}
+                    <tr>
+                        <td>#{{ o.id }}</td>
+                        <td>{{ o.customer_mobile }}</td>
+                        <td>{{ o.product_name }}</td>
+                        <td>₹{{ "%.2f"|format(o.amount) }}</td>
+                        <td><span class="badge">{{ o.status }}</span></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5">No orders available.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="muted">
+            Order creation, payment processing and status editing
+            will be connected in later development steps.
+        </p>
+    </section>
+
+    <section class="section" id="settings">
+        <h2>⚙️ Shop & Social Media Settings</h2>
+        <p class="muted">
+            Update these details here instead of editing website code.
+        </p>
+
+        <form action="/admin/settings" method="post">
+            <div class="row">
+                <div>
+                    <label>Shop Name</label>
+                    <input name="shop_name" value="{{ settings.get('shop_name','') }}">
+                </div>
+                <div>
+                    <label>WhatsApp Number (country code included)</label>
+                    <input name="whatsapp" value="{{ settings.get('whatsapp','') }}" placeholder="919876543210">
+                </div>
+                <div>
+                    <label>Instagram Profile URL</label>
+                    <input name="instagram" type="url" value="{{ settings.get('instagram','') }}">
+                </div>
+                <div>
+                    <label>Contact Email</label>
+                    <input name="email" type="email" value="{{ settings.get('email','') }}">
+                </div>
+                <div>
+                    <label>Primary Phone</label>
+                    <input name="phone" value="{{ settings.get('phone','') }}">
+                </div>
+                <div>
+                    <label>Google Maps URL</label>
+                    <input name="maps_url" type="url" value="{{ settings.get('maps_url','') }}">
+                </div>
+            </div>
+
+            <label>Full Shop Address</label>
+            <textarea name="address">{{ settings.get('address','') }}</textarea>
+
+            <label>Website Announcement</label>
+            <input name="announcement" value="{{ settings.get('announcement','') }}">
+
+            <label>Website Theme</label>
+            <select name="theme">
+                <option value="black-gold"
+                    {% if settings.get('theme') == 'black-gold' %}selected{% endif %}>
+                    Black & Gold Luxury
+                </option>
+                <option value="black-silver"
+                    {% if settings.get('theme') == 'black-silver' %}selected{% endif %}>
+                    Black & Silver
+                </option>
+            </select>
+
+            <button type="submit">💾 Save Shop Settings</button>
+        </form>
+    </section>
+
+    <section class="section" id="rates">
+        <h2>💰 Gold & Silver Rates</h2>
+        <p class="muted">
+            Enter verified rates. These are manually managed values,
+            not automatic live market prices.
+        </p>
+
+        <form action="/admin/settings" method="post">
+            <div class="row">
+                <div>
+                    <label>24K Gold Rate (₹)</label>
+                    <input name="gold_24k" type="number" min="0" step="0.01"
+                           value="{{ settings.get('gold_24k','') }}">
+                </div>
+                <div>
+                    <label>22K Gold Rate (₹)</label>
+                    <input name="gold_22k" type="number" min="0" step="0.01"
+                           value="{{ settings.get('gold_22k','') }}">
+                </div>
+                <div>
+                    <label>18K Gold Rate (₹)</label>
+                    <input name="gold_18k" type="number" min="0" step="0.01"
+                           value="{{ settings.get('gold_18k','') }}">
+                </div>
+                <div>
+                    <label>Silver Rate (₹)</label>
+                    <input name="silver_rate" type="number" min="0" step="0.01"
+                           value="{{ settings.get('silver_rate','') }}">
+                </div>
+            </div>
+            <button type="submit">💾 Save Rates</button>
+        </form>
+    </section>
+
+    <section class="section" id="marketing">
+        <h2>📢 Marketing & Website Notice</h2>
+        <p class="muted">
+            Manage the announcement displayed in the store's settings.
+        </p>
+        <a class="button secondary" href="#settings">Edit Announcement</a>
+    </section>
+
+    <section class="section" id="security">
+        <h2>🛡️ Admin Security</h2>
+        <p class="muted">
+            Keep the admin username and password private.
+            Use a strong unique password and never publish credentials.
+        </p>
+        <span class="badge">Protected Admin Session</span>
+        <p class="muted">
+            Password changes, staff permissions, backup management
+            and security logs require additional backend implementation.
+        </p>
+    </section>
+
+</main>
+
+<footer>
+    VISHAL JEWELLERS · LUXURY ADMINISTRATION
+</footer>
+
+</body>
+</html>

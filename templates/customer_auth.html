@@ -1,0 +1,29 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account | Vishal Jewellers</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090909;color:#f5d98a;font-family:Arial,sans-serif;padding:20px}
+.card{max-width:600px;margin:50px auto;background:#151515;border:1px solid #b99a52;border-radius:18px;padding:30px;text-align:center;box-shadow:0 0 30px #b99a5220}
+h1{font-size:28px}
+.badge{display:inline-block;background:#302819;border:1px solid #b99a52;padding:8px 15px;border-radius:20px}
+a{display:inline-block;margin:12px;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold}
+.shop{background:#e6c875;color:#111}
+.logout{border:1px solid #e6c875;color:#e6c875}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>✦ Vishal Jewellers ✦</h1>
+<h2>My Account</h2>
+<p>Welcome to your customer account!</p>
+<p>Registered Mobile Number:</p>
+<p class="badge">{{ mobile }}</p>
+<p>Your account has been created successfully.</p>
+<a class="shop" href="{{ url_for('home') }}">Explore Jewellery</a>
+<a class="logout" href="{{ url_for('customer_logout') }}">Logout</a>
+</div>
+</body>
+</html>
