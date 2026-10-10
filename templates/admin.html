@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,7 +59,10 @@ header {
     margin-top: 0;
     font-size: 25px;
 }
-.muted { color: var(--muted); line-height: 1.6; }
+.muted {
+    color: var(--muted);
+    line-height: 1.6;
+}
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit,minmax(145px,1fr));
@@ -124,6 +128,10 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus {
     border-color: var(--gold);
+}
+input[type="file"] {
+    padding: 14px;
+    border-style: dashed;
 }
 textarea { min-height: 80px; resize: vertical; }
 button, .button {
@@ -192,7 +200,6 @@ footer {
 </head>
 
 <body>
-
 <header>
     <div class="brand">
         VISHAL JEWELLERS
@@ -206,26 +213,26 @@ footer {
         <span class="badge">VIP CONTROL CENTER</span>
         <h1>Welcome to Admin Panel 👑</h1>
         <p class="muted">
-            Manage your jewellery store, products, orders,
-            gold rates, customer information and website settings.
+            Manage products, orders, customers, jewellery rates,
+            UPI details and website settings.
         </p>
         <a class="button secondary" href="/">View Website ↗</a>
         <a class="button secondary" href="/admin/logout">Logout</a>
     </div>
 
     {% with messages = get_flashed_messages() %}
-      {% for message in messages %}
-        <div class="flash">{{ message }}</div>
-      {% endfor %}
+        {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
     {% endwith %}
 
     <nav>
         <a href="#overview">Dashboard</a>
         <a href="#products">Products</a>
         <a href="#orders">Orders</a>
-        <a href="#settings">Shop Settings</a>
+        <a href="#settings">Shop & UPI</a>
         <a href="#rates">Gold & Silver</a>
-        <a href="#marketing">Announcements</a>
+        <a href="#marketing">Marketing</a>
         <a href="#security">Security</a>
     </nav>
 
@@ -250,9 +257,15 @@ footer {
 
     <section class="section" id="products">
         <h2>💎 Add New Jewellery Product</h2>
-        <p class="muted">Add a product to your online jewellery catalogue.</p>
+        <p class="muted">
+            Select a photo or video from your phone.
+            Cloudinary upload requires the backend configuration.
+        </p>
 
-        <form action="/admin/product/add" method="post">
+        <form action="/admin/product/add"
+              method="post"
+              enctype="multipart/form-data">
+
             <label>Product Name *</label>
             <input name="name" required placeholder="e.g. Gold Necklace">
 
@@ -274,24 +287,41 @@ footer {
                 </div>
                 <div>
                     <label>Price (₹)</label>
-                    <input name="price" type="number" min="0" step="0.01" value="0">
+                    <input name="price" type="number"
+                           min="0" step="0.01" value="0">
                 </div>
                 <div>
                     <label>Stock Quantity</label>
-                    <input name="stock" type="number" min="0" value="0">
+                    <input name="stock" type="number"
+                           min="0" value="0">
                 </div>
             </div>
 
-            <label>Product Image URL</label>
-            <input name="image_url" type="url" placeholder="https://example.com/product.jpg">
+            <label>Upload Product Image / Video</label>
+            <input
+                name="media"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+            >
+
+            <p class="muted">
+                Supported formats: JPG, PNG, WEBP, GIF, MP4, WEBM and MOV.
+                Backend upload limits and Cloudinary settings apply.
+            </p>
+
+            <label>Or Product Image URL</label>
+            <input name="image_url" type="url"
+                   placeholder="https://example.com/product.jpg">
 
             <label>Description</label>
-            <textarea name="description" placeholder="Describe the jewellery..."></textarea>
+            <textarea name="description"
+                      placeholder="Describe the jewellery..."></textarea>
 
             <button type="submit">＋ Add Product</button>
         </form>
 
         <h2 style="margin-top:28px">Current Products</h2>
+
         <div class="table-wrap">
             <table>
                 <thead>
@@ -358,51 +388,75 @@ footer {
                 </tbody>
             </table>
         </div>
+
         <p class="muted">
-            Order creation, payment processing and status editing
-            will be connected in later development steps.
+            Payment processing and order status editing need backend routes.
         </p>
     </section>
 
     <section class="section" id="settings">
-        <h2>⚙️ Shop & Social Media Settings</h2>
+        <h2>⚙️ Shop, Contact & UPI Settings</h2>
         <p class="muted">
-            Update these details here instead of editing website code.
+            Update your shop information and payment display details.
         </p>
 
         <form action="/admin/settings" method="post">
             <div class="row">
                 <div>
                     <label>Shop Name</label>
-                    <input name="shop_name" value="{{ settings.get('shop_name','') }}">
+                    <input name="shop_name"
+                           value="{{ settings.get('shop_name','') }}">
                 </div>
                 <div>
-                    <label>WhatsApp Number (country code included)</label>
-                    <input name="whatsapp" value="{{ settings.get('whatsapp','') }}" placeholder="919876543210">
+                    <label>WhatsApp Number (with country code)</label>
+                    <input name="whatsapp"
+                           value="{{ settings.get('whatsapp','') }}"
+                           placeholder="919876543210">
                 </div>
                 <div>
                     <label>Instagram Profile URL</label>
-                    <input name="instagram" type="url" value="{{ settings.get('instagram','') }}">
+                    <input name="instagram" type="url"
+                           value="{{ settings.get('instagram','') }}">
                 </div>
                 <div>
                     <label>Contact Email</label>
-                    <input name="email" type="email" value="{{ settings.get('email','') }}">
+                    <input name="email" type="email"
+                           value="{{ settings.get('email','') }}">
                 </div>
                 <div>
                     <label>Primary Phone</label>
-                    <input name="phone" value="{{ settings.get('phone','') }}">
+                    <input name="phone"
+                           value="{{ settings.get('phone','') }}">
                 </div>
                 <div>
                     <label>Google Maps URL</label>
-                    <input name="maps_url" type="url" value="{{ settings.get('maps_url','') }}">
+                    <input name="maps_url" type="url"
+                           value="{{ settings.get('maps_url','') }}">
                 </div>
             </div>
 
             <label>Full Shop Address</label>
             <textarea name="address">{{ settings.get('address','') }}</textarea>
 
+            <div class="row">
+                <div>
+                    <label>UPI ID</label>
+                    <input name="upi_id"
+                           value="{{ settings.get('upi_id','') }}"
+                           placeholder="yourname@upi">
+                </div>
+                <div>
+                    <label>UPI QR Code Image URL</label>
+                    <input name="upi_qr_url" type="url"
+                           value="{{ settings.get('upi_qr_url','') }}"
+                           placeholder="https://example.com/upi-qr.png">
+                </div>
+            </div>
+
             <label>Website Announcement</label>
-            <input name="announcement" value="{{ settings.get('announcement','') }}">
+            <input name="announcement"
+                   value="{{ settings.get('announcement','') }}"
+                   placeholder="Welcome to Vishal Jewellers">
 
             <label>Website Theme</label>
             <select name="theme">
@@ -416,37 +470,40 @@ footer {
                 </option>
             </select>
 
-            <button type="submit">💾 Save Shop Settings</button>
+            <button type="submit">💾 Save Shop & UPI Settings</button>
         </form>
     </section>
 
     <section class="section" id="rates">
         <h2>💰 Gold & Silver Rates</h2>
         <p class="muted">
-            Enter verified rates. These are manually managed values,
-            not automatic live market prices.
+            Enter verified rates manually. These are not live market prices.
         </p>
 
         <form action="/admin/settings" method="post">
             <div class="row">
                 <div>
                     <label>24K Gold Rate (₹)</label>
-                    <input name="gold_24k" type="number" min="0" step="0.01"
+                    <input name="gold_24k" type="number" min="0"
+                           step="0.01"
                            value="{{ settings.get('gold_24k','') }}">
                 </div>
                 <div>
                     <label>22K Gold Rate (₹)</label>
-                    <input name="gold_22k" type="number" min="0" step="0.01"
+                    <input name="gold_22k" type="number" min="0"
+                           step="0.01"
                            value="{{ settings.get('gold_22k','') }}">
                 </div>
                 <div>
                     <label>18K Gold Rate (₹)</label>
-                    <input name="gold_18k" type="number" min="0" step="0.01"
+                    <input name="gold_18k" type="number" min="0"
+                           step="0.01"
                            value="{{ settings.get('gold_18k','') }}">
                 </div>
                 <div>
                     <label>Silver Rate (₹)</label>
-                    <input name="silver_rate" type="number" min="0" step="0.01"
+                    <input name="silver_rate" type="number" min="0"
+                           step="0.01"
                            value="{{ settings.get('silver_rate','') }}">
                 </div>
             </div>
@@ -457,7 +514,7 @@ footer {
     <section class="section" id="marketing">
         <h2>📢 Marketing & Website Notice</h2>
         <p class="muted">
-            Manage the announcement displayed in the store's settings.
+            Edit the announcement in Shop & UPI Settings above.
         </p>
         <a class="button secondary" href="#settings">Edit Announcement</a>
     </section>
@@ -465,14 +522,10 @@ footer {
     <section class="section" id="security">
         <h2>🛡️ Admin Security</h2>
         <p class="muted">
-            Keep the admin username and password private.
-            Use a strong unique password and never publish credentials.
+            Keep your admin username and password private.
+            Never publish passwords or API secrets.
         </p>
         <span class="badge">Protected Admin Session</span>
-        <p class="muted">
-            Password changes, staff permissions, backup management
-            and security logs require additional backend implementation.
-        </p>
     </section>
 
 </main>
@@ -482,4 +535,5 @@ footer {
 </footer>
 
 </body>
-</html>
+                            </html>
+    
