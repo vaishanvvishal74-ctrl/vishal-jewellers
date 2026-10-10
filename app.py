@@ -1,8 +1,7 @@
-
 import os
+import logging
 from functools import wraps
 from datetime import datetime
-from urllib.parse import quote
 
 import cloudinary
 import cloudinary.uploader
@@ -14,31 +13,65 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.exceptions import RequestEntityTooLarge
+
+# --------------------------------------------------
+# APP CONFIGURATION
+# --------------------------------------------------
 
 app = Flask(__name__)
+
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or os.urandom(32).hex()
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
+logging.basicConfig(level=logging.INFO)
+
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 
-cloudinary.config(
-    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.environ.get("CLOUDINARY_API_KEY"),
-    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
-    secure=True,
-)
+# --------------------------------------------------
+# CLOUDINARY CONFIGURATION
+# --------------------------------------------------
+
+CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "").strip()
+CLOUD_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "").strip()
+CLOUD_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", "").strip()
+
+if CLOUD_NAME and CLOUD_API_KEY and CLOUD_API_SECRET:
+    cloudinary.config(
+        cloud_name=CLOUD_NAME,
+        api_key=CLOUD_API_KEY,
+        api_secret=CLOUD_API_SECRET,
+        secure=True,
+    )
+    app.logger.info("Cloudinary configuration loaded.")
+else:
+    app.logger.warning(
+        "Cloudinary credentials missing. Check Render Environment."
+    )
+
+# --------------------------------------------------
+# DATABASE
+# --------------------------------------------------
 
 database_url = os.environ.get("DATABASE_URL", "sqlite:///jewellers.db")
+
 if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = database_url.replace(
+        "postgres://", "postgresql://", 1
+    )
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
+
+# --------------------------------------------------
+# DATABASE MODELS
+# --------------------------------------------------
 
 class Setting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -68,8 +101,6 @@ class Order(db.Model):
     product_name = db.Column(db.String(150), nullable=False)
     amount = db.Column(db.Float, default=0)
     status = db.Column(db.String(40), default="Pending")
-
-    # Added columns are migrated below for existing databases.
     customer_name = db.Column(db.String(150), default="")
     customer_address = db.Column(db.Text, default="")
     payment_method = db.Column(db.String(30), default="COD")
@@ -78,7 +109,9 @@ class Order(db.Model):
 
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("order.id"), nullable=False
+    )
     product_id = db.Column(db.Integer, nullable=True)
     product_name = db.Column(db.String(150), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
@@ -91,6 +124,10 @@ class Coupon(db.Model):
     discount_percent = db.Column(db.Integer, default=0)
     active = db.Column(db.Boolean, default=True)
 
+
+# --------------------------------------------------
+# WEBSITE SETTINGS
+# --------------------------------------------------
 
 DEFAULT_SETTINGS = {
     "shop_name": "Vishal Jewellers",
@@ -118,13 +155,20 @@ def get_settings():
     return result
 
 
+# --------------------------------------------------
+# DATABASE MIGRATION
+# --------------------------------------------------
+
 def migrate_database():
-    """Add new order columns without deleting existing orders."""
     inspector = inspect(db.engine)
+
     if "order" not in inspector.get_table_names():
         return
 
-    existing = {col["name"] for col in inspector.get_columns("order")}
+    existing = {
+        col["name"] for col in inspector.get_columns("order")
+    }
+
     additions = {
         "customer_name": "VARCHAR(150) DEFAULT ''",
         "customer_address": "TEXT",
@@ -136,9 +180,16 @@ def migrate_database():
         for column, definition in additions.items():
             if column not in existing:
                 connection.execute(
-                    text(f'ALTER TABLE "order" ADD COLUMN "{column}" {definition}')
+                    text(
+                        f'ALTER TABLE "order" ADD COLUMN '
+                        f'"{column}" {definition}'
+                    )
                 )
 
+
+# --------------------------------------------------
+# ADMIN AUTHENTICATION
+# --------------------------------------------------
 
 def admin_required(function):
     @wraps(function)
@@ -149,11 +200,68 @@ def admin_required(function):
     return wrapper
 
 
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if (
+            ADMIN_PASSWORD
+            and username == ADMIN_USERNAME
+            and password == ADMIN_PASSWORD
+        ):
+            session.clear()
+            session["admin_logged_in"] = True
+            return redirect(url_for("admin"))
+
+        flash("Login galat hai ya Render Environment configure nahi hai.")
+
+    return render_template("admin_login.html") if False else (
+        """<!doctype html>
+        <html lang="hi">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Vishal Jewellers Admin Login</title>
+        </head>
+        <body style="background:#111;color:#e6c875;font-family:Arial;
+                     max-width:360px;margin:60px auto;padding:20px">
+          <h2>Vishal Jewellers</h2>
+          <h3>Admin Login</h3>
+          <form method="post">
+            <input name="username" placeholder="Username"
+                   autocomplete="username" required
+                   style="box-sizing:border-box;padding:12px;width:100%;margin:8px 0">
+            <input name="password" type="password" placeholder="Password"
+                   autocomplete="current-password" required
+                   style="box-sizing:border-box;padding:12px;width:100%;margin:8px 0">
+            <button type="submit"
+                    style="padding:12px;width:100%;background:#e6c875">
+              Login
+            </button>
+          </form>
+        </body>
+        </html>"""
+    )
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.clear()
+    return redirect(url_for("home"))
+
+
+# --------------------------------------------------
+# HOME PAGE
+# --------------------------------------------------
+
 @app.route("/")
 def home():
     products = Product.query.order_by(Product.id.desc()).all()
-    cart = session.get("cart", {})
-    cart_count = sum(int(q) for q in cart.values())
+    cart_data = session.get("cart", {})
+    cart_count = sum(int(q) for q in cart_data.values())
+
     return render_template(
         "index.html",
         products=products,
@@ -166,6 +274,10 @@ def home():
 def health():
     return {"status": "ok"}, 200
 
+
+# --------------------------------------------------
+# CART
+# --------------------------------------------------
 
 @app.route("/cart")
 def cart():
@@ -180,6 +292,7 @@ def cart():
 
         quantity = int(quantity)
         subtotal = product.price * quantity
+
         items.append({
             "product": product,
             "quantity": quantity,
@@ -228,16 +341,21 @@ def update_cart():
 
     for product_id in list(cart_data.keys()):
         try:
-            quantity = int(request.form.get(f"quantity_{product_id}", "1"))
+            quantity = int(
+                request.form.get(f"quantity_{product_id}", "1")
+            )
             product = db.session.get(Product, int(product_id))
 
             if not product or quantity <= 0:
                 cart_data.pop(product_id, None)
             elif quantity > product.stock:
                 cart_data[product_id] = product.stock
-                flash(f"{product.name}: stock ke hisaab se quantity update ki.")
+                flash(
+                    f"{product.name}: stock ke hisaab se quantity update ki."
+                )
             else:
                 cart_data[product_id] = quantity
+
         except (ValueError, TypeError):
             cart_data.pop(product_id, None)
 
@@ -255,9 +373,14 @@ def remove_from_cart(product_id):
     return redirect(url_for("cart"))
 
 
+# --------------------------------------------------
+# CHECKOUT AND ORDERS
+# --------------------------------------------------
+
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
     cart_data = session.get("cart", {})
+
     if not cart_data:
         flash("Pehle cart mein product add karein.")
         return redirect(url_for("home"))
@@ -269,6 +392,7 @@ def checkout():
         product = db.session.get(Product, int(product_id))
         if not product:
             continue
+
         quantity = int(quantity)
         items.append((product, quantity))
         total += product.price * quantity
@@ -296,11 +420,12 @@ def checkout():
             flash("Payment method sahi select karein.")
             return redirect(url_for("checkout"))
 
-        # Recheck stock immediately before saving the order.
         for product, quantity in items:
             db.session.refresh(product)
             if quantity > product.stock or quantity < 1:
-                flash(f"{product.name} ka stock badal gaya hai. Cart check karein.")
+                flash(
+                    f"{product.name} ka stock badal gaya hai. Cart check karein."
+                )
                 return redirect(url_for("cart"))
 
         summary = ", ".join(
@@ -335,8 +460,12 @@ def checkout():
                 product.stock -= quantity
 
             db.session.commit()
+            order_id = order.id
             session.pop("cart", None)
-            return redirect(url_for("order_success", order_id=order.id))
+            return redirect(
+                url_for("order_success", order_id=order_id)
+            )
+
         except Exception:
             db.session.rollback()
             app.logger.exception("Checkout failed")
@@ -354,12 +483,13 @@ def checkout():
 @app.route("/order/success/<int:order_id>")
 def order_success(order_id):
     order = db.session.get(Order, order_id)
+
     if not order:
         flash("Order nahi mila.")
         return redirect(url_for("home"))
 
-    # This page displays order information; it does not confirm UPI payment.
     items = OrderItem.query.filter_by(order_id=order.id).all()
+
     return render_template(
         "order_success.html",
         order=order,
@@ -368,36 +498,35 @@ def order_success(order_id):
     )
 
 
-@app.route("/admin/login", methods=["GET", "POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
+@app.route("/admin/order/update/<int:order_id>", methods=["POST"])
+@admin_required
+def update_order(order_id):
+    order = db.session.get(Order, order_id)
 
-        if ADMIN_PASSWORD and username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session.clear()
-            session["admin_logged_in"] = True
-            return redirect(url_for("admin"))
+    if not order:
+        flash("Order nahi mila.")
+        return redirect(url_for("admin"))
 
-        flash("Login galat hai ya Render Environment configure nahi hai.")
+    allowed_statuses = {
+        "Pending", "Confirmed", "Processing", "Shipped",
+        "Delivered", "Cancelled"
+    }
 
-    messages = "".join(
-        f'<p style="color:#ff8080">{message}</p>'
-        for category, message in (session.pop("_flashes", []) or [])
-    )
+    status = request.form.get("status", "")
 
-    return f"""<!doctype html>
-<html lang="hi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vishal Jewellers Admin Login</title></head>
-<body style="background:#111;color:#e6c875;font-family:Arial;max-width:360px;margin:60px auto;padding:20px">
-<h2>Vishal Jewellers</h2><h3>Admin Login</h3>{messages}
-<form method="post">
-<input name="username" placeholder="Username" autocomplete="username" required style="box-sizing:border-box;padding:12px;width:100%;margin:8px 0">
-<input name="password" type="password" placeholder="Password" autocomplete="current-password" required style="box-sizing:border-box;padding:12px;width:100%;margin:8px 0">
-<button type="submit" style="padding:12px;width:100%;background:#e6c875">Login</button>
-</form></body></html>"""
+    if status not in allowed_statuses:
+        flash("Order status sahi nahi hai.")
+        return redirect(url_for("admin"))
 
+    order.status = status
+    db.session.commit()
+    flash("Order status update ho gaya.")
+    return redirect(url_for("admin"))
+
+
+# --------------------------------------------------
+# ADMIN DASHBOARD AND SETTINGS
+# --------------------------------------------------
 
 @app.route("/admin")
 @admin_required
@@ -415,7 +544,6 @@ def admin():
 @app.route("/admin/settings", methods=["POST"])
 @admin_required
 def save_settings():
-    # Update only fields submitted by the current form.
     for name in DEFAULT_SETTINGS:
         if name not in request.form:
             continue
@@ -433,10 +561,15 @@ def save_settings():
     return redirect(url_for("admin"))
 
 
+# --------------------------------------------------
+# ADD PRODUCT AND CLOUDINARY UPLOAD
+# --------------------------------------------------
+
 @app.route("/admin/product/add", methods=["POST"])
 @admin_required
 def add_product():
     name = request.form.get("name", "").strip()
+
     if not name:
         flash("Product name zaroori hai.")
         return redirect(url_for("admin"))
@@ -444,8 +577,10 @@ def add_product():
     try:
         price = float(request.form.get("price", "0"))
         stock = int(request.form.get("stock", "0"))
+
         if price < 0 or stock < 0:
             raise ValueError
+
     except ValueError:
         flash("Price aur stock sahi enter karo.")
         return redirect(url_for("admin"))
@@ -454,150 +589,77 @@ def add_product():
     media_file = request.files.get("media")
 
     if media_file and media_file.filename:
-        cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME")
-        api_key = os.environ.get("CLOUDINARY_API_KEY")
-        api_secret = os.environ.get("CLOUDINARY_API_SECRET")
-
-        if not all([cloud_name, api_key, api_secret]):
+        if not all([CLOUD_NAME, CLOUD_API_KEY, CLOUD_API_SECRET]):
+            app.logger.error(
+                "Upload blocked: Cloudinary environment variables missing."
+            )
             flash("Cloudinary settings configure nahi hain.")
             return redirect(url_for("admin"))
 
-        extension = os.path.splitext(media_file.filename)[1].lower()
-        allowed = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov"}
+        filename = media_file.filename.lower()
+        extension = os.path.splitext(filename)[1]
+
+        allowed_images = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+        allowed_videos = {".mp4", ".webm", ".mov"}
+        allowed = allowed_images | allowed_videos
 
         if extension not in allowed:
             flash("JPG, PNG, WEBP, GIF, MP4, WEBM ya MOV file chunein.")
             return redirect(url_for("admin"))
 
         try:
-            resource_type = "video" if extension in {".mp4", ".webm", ".mov"} else "image"
-            result = cloudinary.uploader.upload(
-                media_file, resource_type=resource_type,
-                folder="vishal-jewellers"
+            media_file.stream.seek(0, 2)
+            file_size = media_file.stream.tell()
+            media_file.stream.seek(0)
+
+            if file_size == 0:
+                flash("Chuni hui file khaali hai.")
+                return redirect(url_for("admin"))
+
+            if file_size > 25 * 1024 * 1024:
+                flash("File 25 MB se chhoti honi chahiye.")
+                return redirect(url_for("admin"))
+
+            resource_type = (
+                "video" if extension in allowed_videos else "image"
             )
-            image_url = result["secure_url"]
-        except Exception:
-            app.logger.exception("Cloudinary upload failed")
-            flash("Media upload nahi hua. Cloudinary settings check karein.")
+
+            result = cloudinary.uploader.upload(
+                media_file,
+                resource_type=resource_type,
+                folder="vishal-jewellers",
+                timeout=60,
+            )
+
+            uploaded_url = result.get("secure_url")
+
+            if not uploaded_url:
+                raise RuntimeError(
+                    "Cloudinary response did not contain secure_url."
+                )
+
+            image_url = uploaded_url
+            app.logger.info(
+                "Cloudinary upload succeeded. Resource type: %s",
+                resource_type,
+            )
+
+        except Exception as e:
+            # Never log API secrets or credentials.
+            app.logger.exception(
+                "Cloudinary upload failed. Error type: %s",
+                type(e).__name__,
+            )
+            flash(
+                "Media upload failed. Render Logs mein exact error check karein."
+            )
             return redirect(url_for("admin"))
 
     product = Product(
         name=name,
-        category=request.form.get("category", "Gold Jewellery").strip(),
+        category=request.form.get(
+            "category", "Gold Jewellery"
+        ).strip(),
         price=price,
         stock=stock,
-        description=request.form.get("description", "").strip(),
-        image_url=image_url,
-    )
-    db.session.add(product)
-    db.session.commit()
-    flash("Product added successfully!")
-    return redirect(url_for("admin"))
-
-
-@app.route("/admin/product/delete/<int:product_id>", methods=["POST"])
-@admin_required
-def delete_product(product_id):
-    product = db.session.get(Product, product_id)
-    if product:
-        db.session.delete(product)
-        db.session.commit()
-        flash("Product deleted.")
-    else:
-        flash("Product nahi mila.")
-    return redirect(url_for("admin"))
-
-
-@app.route("/admin/order/update/<int:order_id>", methods=["POST"])
-@admin_required
-def update_order(order_id):
-    order = db.session.get(Order, order_id)
-    if not order:
-        flash("Order nahi mila.")
-        return redirect(url_for("admin"))
-
-    allowed_statuses = {
-        "Pending", "Confirmed", "Processing", "Shipped",
-        "Delivered", "Cancelled"
-    }
-    status = request.form.get("status", "")
-    if status not in allowed_statuses:
-        flash("Order status sahi nahi hai.")
-        return redirect(url_for("admin"))
-
-    order.status = status
-    db.session.commit()
-    flash("Order status update ho gaya.")
-    return redirect(url_for("admin"))
-
-
-@app.route("/admin/logout")
-def admin_logout():
-    session.clear()
-    return redirect(url_for("home"))
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        mobile = request.form.get("mobile", "").strip()
-        password = request.form.get("password", "")
-
-        if not mobile.isdigit() or len(mobile) != 10:
-            flash("10 digit ka sahi mobile number enter karo.")
-            return redirect(url_for("register"))
-        if len(password) < 8:
-            flash("Password kam se kam 8 characters ka hona chahiye.")
-            return redirect(url_for("register"))
-        if Customer.query.filter_by(mobile=mobile).first():
-            flash("Is mobile number se account pehle se hai.")
-            return redirect(url_for("register"))
-
-        db.session.add(Customer(
-            mobile=mobile,
-            password_hash=generate_password_hash(password),
-        ))
-        db.session.commit()
-        session["customer_mobile"] = mobile
-        return redirect(url_for("account"))
-
-    return render_template("customer_auth.html", mode="register")
-
-
-@app.route("/login", methods=["GET", "POST"])
-def customer_login():
-    if request.method == "POST":
-        mobile = request.form.get("mobile", "").strip()
-        password = request.form.get("password", "")
-        customer = Customer.query.filter_by(mobile=mobile).first()
-
-        if customer and check_password_hash(customer.password_hash, password):
-            session["customer_mobile"] = customer.mobile
-            return redirect(url_for("account"))
-        flash("Mobile number ya password galat hai.")
-
-    return render_template("customer_auth.html", mode="login")
-
-
-@app.route("/account")
-def account():
-    mobile = session.get("customer_mobile")
-    if not mobile:
-        return redirect(url_for("customer_login"))
-    return render_template("customer_account.html", mobile=mobile)
-
-
-@app.route("/customer/logout")
-def customer_logout():
-    session.pop("customer_mobile", None)
-    return redirect(url_for("home"))
-
-
-with app.app_context():
-    db.create_all()
-    migrate_database()
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
     
