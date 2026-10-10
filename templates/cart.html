@@ -1,1 +1,100 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Cart | Vishal Jewellers</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
+header{padding:20px 5%;background:#101010;border-bottom:1px solid #49391d;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.logo{color:#e6c875;font-size:20px;font-weight:bold;letter-spacing:2px}
+a{color:#e6c875;text-decoration:none}
+main{max-width:950px;margin:35px auto;padding:0 16px}
+h1,h2{color:#e6c875;font-family:Georgia,serif;font-weight:normal}
+.panel{background:#141414;border:1px solid #49391d;border-radius:8px;padding:20px;margin:18px 0}
+.item{display:grid;grid-template-columns:1fr auto;gap:15px;padding:16px 0;border-bottom:1px solid #333}
+.item:last-child{border-bottom:0}
+.price{font-weight:bold}
+input{width:80px;padding:10px;background:#090909;color:white;border:1px solid #66512a;border-radius:4px}
+button,.btn{display:inline-block;background:#e6c875;color:#111;border:0;border-radius:4px;padding:12px 17px;font-weight:bold;cursor:pointer}
+.remove{background:#542323;color:#fff;padding:9px 12px}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.total{font-size:22px;font-weight:bold;color:#e6c875}
+.muted{color:#aaa}
+@media(max-width:500px){.item{grid-template-columns:1fr}.item input{width:90px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">VISHAL JEWELLERS</div>
+  <nav><a href="/">Home</a> &nbsp; <a href="/cart">🛒 Your Cart</a></nav>
+</header>
+
+<main>
+<h1>Your Shopping Cart</h1>
+<p class="muted">Review your selected jewellery before checkout.</p>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="panel">
+{% for message in messages %}<p>{{ message }}</p>{% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+{% if items %}
+<div class="panel">
+<form action="{{ url_for('update_cart') }}" method="post">
+{% for item in items %}
+<div class="item">
+  <div>
+    <h3>{{ item.product.name }}</h3>
+    <p class="muted">{{ item.product.category }}</p>
+    <p>Price: ₹{{ "%.2f"|format(item.product.price) }}</p>
+    <p class="price">Subtotal: ₹{{ "%.2f"|format(item.subtotal) }}</p>
+    <form></form>
+    <button class="remove" type="button"
+      onclick="if(confirm('Remove this product?')) document.getElementById('remove-{{ item.product.id }}').submit()">
+      Remove
+    </button>
+  </div>
+  <div>
+    <label for="quantity-{{ item.product.id }}">Quantity</label><br><br>
+    <input id="quantity-{{ item.product.id }}"
+      name="quantity_{{ item.product.id }}"
+      type="number" min="0" max="{{ item.product.stock }}"
+      value="{{ item.quantity }}" required>
+  </div>
+</div>
+{% endfor %}
+
+<div class="actions">
+  <button type="submit">Update Cart</button>
+  <a class="btn" href="{{ url_for('checkout') }}">Proceed to Checkout →</a>
+</div>
+</form>
+
+{% for item in items %}
+<form id="remove-{{ item.product.id }}"
+      action="{{ url_for('remove_from_cart', product_id=item.product.id) }}"
+      method="post" style="display:none"></form>
+{% endfor %}
+
+<hr style="border-color:#49391d;margin:22px 0">
+<div class="total">Total: ₹{{ "%.2f"|format(total) }}</div>
+</div>
+{% else %}
+<div class="panel">
+  <h2>Your cart is empty</h2>
+  <p class="muted">Add jewellery from our collection to get started.</p>
+  <a class="btn" href="/#collection">Explore Collection</a>
+</div>
+{% endif %}
+
+<p><a href="/">← Continue Shopping</a></p>
+</main>
+</body>
+</html>
+
