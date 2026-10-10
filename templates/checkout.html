@@ -1,1 +1,130 @@
 
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout | Vishal Jewellers</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
+header{padding:18px 5%;background:#101010;border-bottom:1px solid #49391d}
+.logo{color:#e6c875;font-size:20px;font-weight:bold;letter-spacing:2px}
+main{max-width:760px;margin:30px auto;padding:0 16px}
+h1,h2{color:#e6c875;font-family:Georgia,serif;font-weight:normal}
+.panel{background:#141414;border:1px solid #49391d;border-radius:8px;padding:22px;margin:20px 0}
+label{display:block;margin:15px 0 7px;color:#ddd}
+input,textarea,select{width:100%;padding:13px;background:#090909;color:#fff;border:1px solid #66512a;border-radius:4px;font-size:16px}
+textarea{min-height:100px;resize:vertical}
+button,.btn{display:inline-block;background:#e6c875;color:#111;border:0;border-radius:4px;padding:14px 18px;font-weight:bold;cursor:pointer;text-decoration:none}
+button{width:100%;margin-top:20px;font-size:16px}
+.total{font-size:23px;color:#e6c875;font-weight:bold}
+.muted{color:#aaa;line-height:1.6}
+.row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #333}
+.payment-option{display:flex;align-items:center;gap:10px;margin:12px 0}
+.payment-option input{width:auto}
+.payment-option label{margin:0}
+.qr{display:block;max-width:220px;max-height:220px;object-fit:contain;margin:15px auto}
+.notice{background:#211b0e;padding:12px;border-radius:5px;color:#e6c875;line-height:1.6}
+a{color:#e6c875}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">VISHAL JEWELLERS</div>
+  <p><a href="/cart">← Back to Cart</a></p>
+</header>
+
+<main>
+<h1>Secure Checkout</h1>
+<p class="muted">अपनी डिलीवरी की जानकारी भरकर ऑर्डर करें।</p>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="panel">
+{% for message in messages %}
+<p>{{ message }}</p>
+{% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="panel">
+<h2>Order Summary</h2>
+{% for product, quantity in items %}
+<div class="row">
+  <span>{{ product.name }} × {{ quantity }}</span>
+  <strong>₹{{ "%.2f"|format(product.price * quantity) }}</strong>
+</div>
+{% endfor %}
+<div class="row" style="border:0;margin-top:12px">
+  <span class="total">Total Amount</span>
+  <span class="total">₹{{ "%.2f"|format(total) }}</span>
+</div>
+<p class="muted">अंतिम डिलीवरी शुल्क, यदि लागू हो, दुकान द्वारा पुष्टि किया जा सकता है।</p>
+</div>
+
+<div class="panel">
+<h2>Delivery Details</h2>
+<form action="{{ url_for('checkout') }}" method="post">
+  <label for="customer_name">पूरा नाम *</label>
+  <input id="customer_name" name="customer_name" type="text"
+         maxlength="150" autocomplete="name" required>
+
+  <label for="mobile">10 अंकों का मोबाइल नंबर *</label>
+  <input id="mobile" name="mobile" type="tel"
+         inputmode="numeric" pattern="[0-9]{10}"
+         maxlength="10" autocomplete="tel-national" required>
+
+  <label for="address">पूरा डिलीवरी पता *</label>
+  <textarea id="address" name="address" maxlength="2000"
+            autocomplete="street-address"
+            placeholder="मकान नंबर, गली, शहर, राज्य और PIN code"
+            required></textarea>
+
+  <h2 style="margin-top:28px">Payment Method</h2>
+
+  <div class="payment-option">
+    <input type="radio" id="cod" name="payment_method"
+           value="COD" checked>
+    <label for="cod">Cash on Delivery (डिलीवरी पर भुगतान)</label>
+  </div>
+
+  <div class="payment-option">
+    <input type="radio" id="upi" name="payment_method"
+           value="UPI">
+    <label for="upi">UPI Payment</label>
+  </div>
+
+  <div id="upi-details" class="notice" hidden>
+    <p>UPI ID: <strong>{{ settings.get('upi_id') or 'दुकान ने UPI ID सेट नहीं की है' }}</strong></p>
+    {% if settings.get('upi_qr_url') %}
+      <img class="qr" src="{{ settings.get('upi_qr_url') }}"
+           alt="Shop UPI QR code">
+    {% endif %}
+    <p>भुगतान करने से पहले UPI ID और राशि दुकान से पुष्टि करें। केवल UPI चुनने से भुगतान नहीं होता।</p>
+    <p>आपका ऑर्डर भुगतान की पुष्टि होने तक Pending रहेगा।</p>
+  </div>
+
+  <button type="submit">Place Order · ₹{{ "%.2f"|format(total) }}</button>
+</form>
+</div>
+
+<p><a href="/cart">← Cart में वापस जाएँ</a></p>
+</main>
+
+<script>
+const upiRadio = document.getElementById('upi');
+const codRadio = document.getElementById('cod');
+const details = document.getElementById('upi-details');
+
+function updatePaymentDetails() {
+  details.hidden = !upiRadio.checked;
+}
+upiRadio.addEventListener('change', updatePaymentDetails);
+codRadio.addEventListener('change', updatePaymentDetails);
+updatePaymentDetails();
+</script>
+</body>
+</html>
+
