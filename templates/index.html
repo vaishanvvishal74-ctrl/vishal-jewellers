@@ -4,251 +4,134 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vishal Jewellers | Luxury Jewellery</title>
-
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;
- background:#080808;
- color:#fff;
- font-family:Arial,sans-serif
-}
-header{
- display:flex;
- justify-content:space-between;
- align-items:center;
- padding:20px 6%;
- border-bottom:1px solid #3a2d17;
- background:#0c0c0c;
- position:sticky;
- top:0;
- z-index:5
-}
-.logo{
- color:#e6c875;
- font-size:21px;
- font-weight:bold;
- letter-spacing:2px
-}
-nav a{
- color:#eee;
- text-decoration:none;
- margin-left:15px;
- font-size:13px
-}
+body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:18px 5%;border-bottom:1px solid #49391d;background:#0c0c0c;position:sticky;top:0;z-index:5}
+.logo{color:#e6c875;font-size:20px;font-weight:bold;letter-spacing:2px}
+nav{display:flex;gap:15px;flex-wrap:wrap}
+nav a{color:#eee;text-decoration:none;font-size:13px}
 nav a:hover{color:#e6c875}
-.hero{
- min-height:480px;
- display:flex;
- flex-direction:column;
- justify-content:center;
- align-items:center;
- text-align:center;
- padding:35px 20px;
- background:
- radial-gradient(ellipse at center,#403019 0%,#17120b 38%,#080808 75%);
-}
-.tag{
- color:#e6c875;
- letter-spacing:4px;
- font-size:12px
-}
-h1{
- font-family:Georgia,serif;
- font-size:clamp(38px,7vw,76px);
- font-weight:normal;
- margin:20px 0
-}
+.hero{min-height:440px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:35px 20px;background:radial-gradient(ellipse at center,#403019,#17120b 45%,#080808 80%)}
+.tag{color:#e6c875;letter-spacing:3px;font-size:12px}
+h1{font-family:Georgia,serif;font-size:clamp(38px,7vw,72px);font-weight:normal;margin:20px 0}
 .gold{color:#e6c875}
-.hero p{
- color:#c6c0b5;
- max-width:500px;
- line-height:1.8
-}
-.btn{
- display:inline-block;
- margin-top:22px;
- padding:14px 24px;
- background:#e6c875;
- color:#111;
- text-decoration:none;
- border-radius:3px;
- font-weight:bold
-}
-section{padding:45px 6%}
+.hero p{color:#c6c0b5;line-height:1.8;max-width:500px}
+.btn,button{display:inline-block;padding:12px 17px;background:#e6c875;color:#111;border:0;border-radius:3px;text-decoration:none;font-weight:bold;cursor:pointer}
+section{padding:42px 5%}
 .heading{text-align:center;margin-bottom:30px}
-.heading h2{
- color:#e6c875;
- font-family:Georgia,serif;
- font-size:32px;
- font-weight:normal
-}
-.heading p{color:#aaa}
-.cards{
- display:grid;
- grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
- gap:20px
-}
-.card{
- background:#131313;
- border:1px solid #332819;
- border-radius:8px;
- overflow:hidden;
- transition:.3s
-}
-.card:hover{
- transform:translateY(-5px);
- border-color:#e6c875
-}
-.photo{
- height:210px;
- display:flex;
- justify-content:center;
- align-items:center;
- background:linear-gradient(145deg,#292015,#100e0b);
- font-size:70px
-}
-.info{padding:18px}
+.heading h2{color:#e6c875;font-family:Georgia,serif;font-size:32px;font-weight:normal}
+.heading p,.muted{color:#aaa}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px}
+.card{background:#131313;border:1px solid #332819;border-radius:8px;overflow:hidden}
+.photo{height:220px;display:flex;justify-content:center;align-items:center;background:linear-gradient(145deg,#292015,#100e0b);font-size:65px;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}
+.info{padding:17px}
 .info h3{color:#e6c875}
 .info p{color:#aaa;line-height:1.6;font-size:14px}
-.price{color:#fff;font-weight:bold}
+.price{font-size:18px;font-weight:bold;margin:12px 0}
+.stock{font-size:12px;color:#bcb6a9}
+.cart-button{width:100%;margin-top:10px}
 .contact{text-align:center;background:#100e0a}
-footer{
- padding:25px;
- text-align:center;
- color:#aaa;
- border-top:1px solid #332819;
- font-size:13px
-}
-@media(max-width:600px){
- header{padding:16px 4%;flex-wrap:wrap;gap:14px}
- nav a{margin-left:0;margin-right:12px}
- .hero{min-height:410px}
- section{padding:35px 4%}
-}
+.notice{text-align:center;color:#e6c875;padding:10px}
+footer{padding:25px;text-align:center;color:#aaa;border-top:1px solid #332819;font-size:13px}
+@media(max-width:600px){header{padding:15px 4%}section{padding:32px 4%}.hero{min-height:380px}}
 </style>
 </head>
-
 <body>
-
 <header>
- <div class="logo">VISHAL JEWELLERS</div>
- <nav>
-  <a href="#home">Home</a>
-  <a href="#collection">Collection</a>
-  <a href="#contact">Contact</a>
-  <a href="/admin/login">Admin</a>
- </nav>
+  <div class="logo">VISHAL JEWELLERS</div>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#collection">Collection</a>
+    <a href="/cart">🛒 Cart ({{ cart_count|default(0) }})</a>
+    <a href="#contact">Contact</a>
+    <a href="/account">Account</a>
+    <a href="/admin/login">Admin</a>
+  </nav>
 </header>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="notice">
+{% for message in messages %}
+<p>{{ message }}</p>
+{% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 
 <main>
 <section class="hero" id="home">
- <div class="tag">TIMELESS BEAUTY · ETERNAL LUXURY</div>
- <h1>Elegance That<br><span class="gold">Lasts Forever</span></h1>
- <p>
-  Discover beautiful jewellery designed to celebrate
-  your most precious moments.
- </p>
- <a class="btn" href="#collection">EXPLORE COLLECTION</a>
+  <div class="tag">TIMELESS BEAUTY · ETERNAL LUXURY</div>
+  <h1>Elegance That<br><span class="gold">Lasts Forever</span></h1>
+  <p>Discover beautiful jewellery designed to celebrate your most precious moments.</p>
+  <a class="btn" href="#collection">EXPLORE COLLECTION</a>
 </section>
 
 <section id="collection">
- <div class="heading">
-  <div class="tag">OUR COLLECTION</div>
-  <h2>Jewellery With a Legacy</h2>
-  <p>Explore our exclusive collections.</p>
- </div>
+  <div class="heading">
+    <div class="tag">OUR COLLECTION</div>
+    <h2>Jewellery With a Legacy</h2>
+    <p>Explore our exclusive collections.</p>
+  </div>
 
- <div class="cards">
+  <div class="cards">
   {% for p in products %}
-  <article class="card">
-   {% if p.image_url %}
-   <div class="photo">
-    <img src="{{ p.image_url }}" alt="{{ p.name }}"
-         style="width:100%;height:100%;object-fit:cover">
-   </div>
-   {% else %}
-   <div class="photo">💎</div>
-   {% endif %}
-   <div class="info">
-    <h3>{{ p.name }}</h3>
-    <p>{{ p.category }}</p>
-    <p>{{ p.description }}</p>
-    <div class="price">₹{{ "%.2f"|format(p.price) }}</div>
-    <p>Available stock: {{ p.stock }}</p>
-   </div>
-  </article>
+    <article class="card">
+      <div class="photo">
+      {% if p.image_url %}
+        <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+      {% else %}
+        💎
+      {% endif %}
+      </div>
+      <div class="info">
+        <h3>{{ p.name }}</h3>
+        <p>{{ p.category }}</p>
+        <p>{{ p.description }}</p>
+        <div class="price">₹{{ "%.2f"|format(p.price) }}</div>
+        <p class="stock">
+          {% if p.stock > 0 %}Available: {{ p.stock }}{% else %}Out of stock{% endif %}
+        </p>
+        {% if p.stock > 0 %}
+        <form action="{{ url_for('add_to_cart', product_id=p.id) }}" method="post">
+          <button class="cart-button" type="submit">🛒 Add to Cart</button>
+        </form>
+        {% else %}
+        <button class="cart-button" disabled style="opacity:.5">Out of Stock</button>
+        {% endif %}
+      </div>
+    </article>
   {% else %}
-  <article class="card">
-   <div class="photo">💍</div>
-   <div class="info">
-    <h3>Gold Jewellery</h3>
-    <p>Elegant designs for special occasions.</p>
-   </div>
-  </article>
-  <article class="card">
-   <div class="photo">✨</div>
-   <div class="info">
-    <h3>Silver Collection</h3>
-    <p>Timeless beauty for every day.</p>
-   </div>
-  </article>
-  <article class="card">
-   <div class="photo">👑</div>
-   <div class="info">
-    <h3>Bridal Collection</h3>
-    <p>Celebrate your unforgettable moments.</p>
-   </div>
-  </article>
+    <article class="card"><div class="photo">💍</div><div class="info"><h3>Gold Jewellery</h3><p class="muted">Products will appear here after you add them in Admin.</p></div></article>
+    <article class="card"><div class="photo">✨</div><div class="info"><h3>Silver Collection</h3><p class="muted">Beautiful designs for everyday wear.</p></div></article>
+    <article class="card"><div class="photo">👑</div><div class="info"><h3>Bridal Collection</h3><p class="muted">Celebrate your special moments.</p></div></article>
   {% endfor %}
- </div>
+  </div>
 </section>
 
 <section class="contact" id="contact">
- <div class="heading">
-  <div class="tag">GET IN TOUCH</div>
-  <h2>{{ settings.get('shop_name', 'Vishal Jewellers') }}</h2>
-  <p>{{ settings.get('announcement', 'Discover Timeless Elegance') }}</p>
-  <p>{{ settings.get('address', '') }}</p>
- </div>
-
- {% if settings.get('phone') %}
- <p>Phone: {{ settings.get('phone') }}</p>
- {% endif %}
-
- {% if settings.get('email') %}
- <p>Email: {{ settings.get('email') }}</p>
- {% endif %}
-
- {% if settings.get('whatsapp') %}
- <a class="btn"
- href="https://wa.me/{{ settings.get('whatsapp')|replace('+','')|replace(' ','') }}"
- target="_blank" rel="noopener">
- Chat on WhatsApp
- </a>
- {% endif %}
-
- {% if settings.get('instagram') %}
- <p>
-  <a href="{{ settings.get('instagram') }}"
-     target="_blank" rel="noopener"
-     style="color:#e6c875">Visit Instagram</a>
- </p>
- {% endif %}
-
- {% if settings.get('maps_url') %}
- <p>
-  <a href="{{ settings.get('maps_url') }}"
-     target="_blank" rel="noopener"
-     style="color:#e6c875">Find Our Store</a>
- </p>
- {% endif %}
+  <div class="heading">
+    <div class="tag">GET IN TOUCH</div>
+    <h2>{{ settings.get('shop_name', 'Vishal Jewellers') }}</h2>
+    <p>{{ settings.get('announcement', 'Discover Timeless Elegance') }}</p>
+    <p>{{ settings.get('address', '') }}</p>
+  </div>
+  {% if settings.get('phone') %}<p>Phone: {{ settings.get('phone') }}</p>{% endif %}
+  {% if settings.get('email') %}<p>Email: {{ settings.get('email') }}</p>{% endif %}
+  {% if settings.get('whatsapp') %}
+    <a class="btn" href="https://wa.me/{{ settings.get('whatsapp')|replace('+','')|replace(' ','')|replace('-','') }}" target="_blank" rel="noopener">Chat on WhatsApp</a>
+  {% endif %}
+  {% if settings.get('instagram') %}
+    <p><a href="{{ settings.get('instagram') }}" target="_blank" rel="noopener" style="color:#e6c875">Visit Instagram</a></p>
+  {% endif %}
+  {% if settings.get('maps_url') %}
+    <p><a href="{{ settings.get('maps_url') }}" target="_blank" rel="noopener" style="color:#e6c875">Find Our Store</a></p>
+  {% endif %}
 </section>
 </main>
 
-<footer>
- © Vishal Jewellers · All Rights Reserved
-</footer>
-
+<footer>© Vishal Jewellers · All Rights Reserved</footer>
 </body>
 </html>
